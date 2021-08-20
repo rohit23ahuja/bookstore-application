@@ -1,0 +1,6 @@
+com\nagarro\bookstore\controller\BookControllerIntegrationTest.class
+com\nagarro\bookstore\BookstoreApplicationTests.class
+com\nagarro\bookstore\service\BookServiceTest.class
+com\nagarro\bookstore\service\PostServiceFailureTest.class
+com\nagarro\bookstore\repository\BookRepositoryTest.class
+com\nagarro\bookstore\controller\BookControllerUnitTest.class
