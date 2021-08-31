@@ -10,8 +10,11 @@ import javax.persistence.Id;
 import javax.persistence.Version;
 import javax.validation.constraints.NotNull;
 
+import lombok.Getter;
+
 @Entity
-public class Book implements Serializable{
+@Getter
+public final class Book implements Serializable{
 
 	private static final long serialVersionUID = 1L;
 
@@ -42,79 +45,54 @@ public class Book implements Serializable{
 	@Version
 	private int version;
 
-	public Book() {
+	private Book() {
 		super();
 	}
-
-	public Book(Long id, String isbn, String title, String author, Integer price, Integer quantity) {
-		super();
-		this.id = id;
-		this.isbn = isbn;
-		this.title = title;
-		this.author = author;
-		this.price = price;
-		this.quantity=quantity;
-	}
+	
 
 	@Override
 	public String toString() {
 		return "Book [id=" + id + ", isbn=" + isbn + ", title=" + title + ", author=" + author + ", price=" + price
 				 + "]";
 	}
+	
+	public static class Builder {
+		private String isbn;
 
-	public Long getId() {
-		return id;
+		private String title;
+
+		private String author;
+
+		private Integer price;
+		
+		private Integer quantity;
+		
+		public Builder() {}
+		
+		public Builder withIsbn(String isbn) {
+			this.isbn = isbn;
+			return this;
+		}
+		
+		public Builder withTitle(String title) {
+			this.title = title;
+			return this;
+		}
+		
+		public Builder withAuthor(String author) {
+			this.author = author;
+			return this;
+		}
+		
+		public Builder withPrice(Integer price) {
+			this.price = price;
+			return this;
+		}
+		
+		public Builder withQuantity(Integer quantity) {
+			this.quantity = quantity;
+			return this;
+		}
 	}
 
-	public String getIsbn() {
-		return isbn;
-	}
-
-	public String getTitle() {
-		return title;
-	}
-
-	public String getAuthor() {
-		return author;
-	}
-
-	public Integer getPrice() {
-		return price;
-	}
-
-	public void setId(Long id) {
-		this.id = id;
-	}
-
-	public void setIsbn(String isbn) {
-		this.isbn = isbn;
-	}
-
-	public void setTitle(String title) {
-		this.title = title;
-	}
-
-	public void setAuthor(String author) {
-		this.author = author;
-	}
-
-	public void setPrice(Integer price) {
-		this.price = price;
-	}
-
-	public Integer getQuantity() {
-		return quantity;
-	}
-
-	public void setQuantity(Integer quantity) {
-		this.quantity = quantity;
-	}
-
-	public int getVersion() {
-		return version;
-	}
-
-	public void setVersion(int version) {
-		this.version = version;
-	}
 }
