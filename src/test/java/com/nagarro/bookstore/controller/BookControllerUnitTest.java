@@ -22,6 +22,7 @@ import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.test.web.servlet.MockMvc;
 
 import com.dummy.bookstore.controller.BookController;
+import com.dummy.bookstore.dto.SearchBookDto;
 import com.dummy.bookstore.model.Book;
 import com.dummy.bookstore.service.BookService;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -38,8 +39,10 @@ public class BookControllerUnitTest {
 	@Test
 	public void getBooks() throws Exception {
 		List<Book> books = new ArrayList<>();
-		Book book = new Book(1l, "123ABC", "Game Of Thrones", "George Martin", 1700, 5);
+		Book book = new Book(1l, "123ABC", "Game Of Thrones", "George Martin", 1700, 5, 1);
 		books.add(book);
+		SearchBookDto searchBookDto = new SearchBookDto("", "", "");
+		
 		when(bookService.getBooks()).thenReturn(books);
 		mockMvc.perform(get("/books"))
 		.andExpect(status().isOk())
@@ -47,12 +50,12 @@ public class BookControllerUnitTest {
 		.andExpect(content().json("[]"));
 		//.andExpect(content().string(containsString("Game Of Thrones")));
 
-		verify(bookService, times(1)).findBooks(null, null, null);
+		verify(bookService, times(1)).findBooks(searchBookDto);
 	}
 	
 	@Test
 	public void addBook() throws Exception{
-		Book book = new Book(7l, "42398", "Times", "India", 5, 5);
+		Book book = new Book(7l, "42398", "Times", "India", 5, 5, 1);
 		mockMvc.perform(post("/books")
 				.contentType("application/json")
 				.content(asJsonString(book)))
@@ -63,7 +66,7 @@ public class BookControllerUnitTest {
 	
 	@Test
 	public void buyBook() throws Exception{
-		Book book = new Book(1l, "123ABC", "Game Of Thrones", "George Martin", 1700, 5);
+		Book book = new Book(1l, "123ABC", "Game Of Thrones", "George Martin", 1700, 5, 1);
 		when(bookService.buyBook(book)).thenReturn("Book Bought");
 		mockMvc.perform(put("/books")
 				.contentType("application/json")

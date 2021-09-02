@@ -17,4 +17,6 @@ public interface BookRepository extends JpaRepository<Book, Long> {
 	Optional<List<Book>> findByTitleContaining(String title);
 
 	Optional<List<Book>> findByAuthorContaining(String author);
+
+	Optional<Book> findFirstByAuthorAndTitle(String author, String title);
 }
