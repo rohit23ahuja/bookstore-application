@@ -1,6 +1,7 @@
 package com.dummy.bookstore.controller;
 
 import java.util.List;
+import java.util.Map;
 
 import javax.validation.Valid;
 
@@ -15,13 +16,24 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.dummy.bookstore.dto.BookDto;
+import com.dummy.bookstore.dto.SearchBookDto;
+import com.dummy.bookstore.mapper.BookDtoMapper;
+import com.dummy.bookstore.mapper.SearchBookDtoMapper;
 import com.dummy.bookstore.model.Book;
+import com.dummy.bookstore.request.AddBookRequest;
 import com.dummy.bookstore.service.BookService;
 
 @RestController
 public class BookController {
 	@Autowired
 	private BookService bookService;
+	
+	@Autowired
+	private SearchBookDtoMapper searchBookDtoMapper;
+	
+	@Autowired
+	private BookDtoMapper bookDtoMapper;
 
 	/**
 	 * Api to search books based on either one of - isbn, author or title. If none
@@ -36,10 +48,9 @@ public class BookController {
 	 * @return
 	 */
 	@GetMapping("/books")
-	public ResponseEntity<List<Book>> getBooks(@RequestParam(value = "isbn", required = false) String isbn,
-			@RequestParam(value = "author", required = false) String author,
-			@RequestParam(value = "title", required = false) String title) {
-		return new ResponseEntity<List<Book>>(bookService.findBooks(isbn, author, title), HttpStatus.OK);
+	public ResponseEntity<List<Book>> getBooks(@RequestParam Map<String, String> allRequestParams) {
+		SearchBookDto searchBookDto = searchBookDtoMapper.requestParamsToSearchBookDto(allRequestParams);
+		return new ResponseEntity<List<Book>>(bookService.findBooks(searchBookDto), HttpStatus.OK);
 	}
 
 	/**
@@ -50,8 +61,9 @@ public class BookController {
 	 * @return
 	 */
 	@PostMapping("/books")
-	public ResponseEntity<Book> addBook(@RequestBody @Valid Book book) {
-		return new ResponseEntity<Book>(bookService.addBook(book), HttpStatus.CREATED);
+	public ResponseEntity<Book> addBook(@RequestBody @Valid AddBookRequest addBookRequest) {
+		BookDto bookDto = bookDtoMapper.addBookRequestToBookDto(addBookRequest);
+		return new ResponseEntity<Book>(bookService.addBook(bookDto), HttpStatus.CREATED);
 	}
 
 	/**
