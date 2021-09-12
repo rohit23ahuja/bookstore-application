@@ -1,5 +1,7 @@
 package com.dummy.bookstore.mapper;
 
+import java.util.List;
+
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 
@@ -10,5 +12,10 @@ import com.dummy.bookstore.model.Book;
 public interface BookMapper {
 
 	@Mapping(target = "quantity", constant = "1")
-	Book bookDtoToBook(BookDto bookDto);
+	Book map(BookDto bookDto);
+	
+	BookDto map(Book book);
+	
+	List<BookDto> map(List<Book> books);
+	
 }

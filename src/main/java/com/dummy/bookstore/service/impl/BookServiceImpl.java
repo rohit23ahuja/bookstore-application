@@ -28,11 +28,13 @@ import com.dummy.bookstore.repository.BookRepository;
 import com.dummy.bookstore.service.BookService;
 import com.dummy.bookstore.service.PostService;
 
+import lombok.extern.slf4j.Slf4j;
+
 @Service
 @Transactional(propagation = Propagation.REQUIRED, readOnly = true)
+@Slf4j
 public class BookServiceImpl implements BookService {
-	private static final Logger logger = LoggerFactory
-			.getLogger(BookServiceImpl.class);
+
 	@Autowired
 	private BookRepository bookRepository;
 
@@ -43,106 +45,109 @@ public class BookServiceImpl implements BookService {
 	private BookMapper bookMapper;
 
 	@Override
-	public List<Book> getBooks() {
-		return bookRepository.findAll();
+	public List<BookDto> getBooks() {
+		List<Book> books = bookRepository.findAll();
+		return bookMapper.map(books);
 	}
 
 	@Override
 	@Transactional(propagation = Propagation.REQUIRES_NEW, isolation = Isolation.READ_COMMITTED, readOnly = false, timeout = 30)
-	public Book addBook(BookDto bookDto) {
-		logger.info("Adding book to store");
+	public BookDto addBook(BookDto bookDto) {
+		log.info("Adding book to store");
 		
 		Optional<Book> book = bookRepository.findFirstByIsbn(bookDto.getIsbn());
 		if (book.isPresent()) {
-			logger.info("Book exists updating quantity");
+			log.info("Book exists updating quantity");
 			Book existing = book.get();
 			existing.setQuantity(existing.getQuantity() + 1);
-			return existing;
+			return bookMapper.map(existing);
 		}
 		
 		book = bookRepository.findFirstByAuthorAndTitle(bookDto.getAuthor(), bookDto.getTitle());
 		if (book.isPresent()) {
-			logger.info("Book exists updating quantity");
+			log.info("Book exists updating quantity");
 			Book existing = book.get();
 			existing.setQuantity(existing.getQuantity() + 1);
-			return existing;
+			return bookMapper.map(existing);
 		}
 
-		Book saved = bookRepository.save(bookMapper.bookDtoToBook(bookDto));
-		logger.info("Added Book");
-		return saved;
+		Book saved = bookRepository.save(bookMapper.map(bookDto));
+		log.info("Added Book");
+		return bookMapper.map(saved);
 	}
 
 	@Override
 	@Transactional(propagation = Propagation.REQUIRES_NEW, isolation = Isolation.READ_COMMITTED, readOnly = false, timeout = 30)
-	public String buyBook(Book book) {
-		logger.info("Buying book id - " + book.getId());
-		Book b = bookRepository.findById(book.getId()).orElseThrow(
+	public BookDto buyBook(BookDto bookDto) {
+		log.info("Buying book id - " + bookDto.getId());
+		Book b = bookRepository.findById(bookDto.getId()).orElseThrow(
 				() -> new ResourceNotFoundException("No Book Found"));
 		if (b.getQuantity() <= 0) {
 			throw new SoldOutException("Item sold out");
 		}
-		if (b.getVersion() != book.getVersion()) {
+		if (b.getVersion() != bookDto.getVersion()) {
 			throw new StaleException(
 					"You are working on old version, please refresh and retry");
 		}
 		b.setQuantity(b.getQuantity() - 1);
-		bookRepository.save(b);
-		logger.info("Book Bought, available quantity " + book.getQuantity());
-		return "Book Bought";
+		Book saved = bookRepository.save(b);
+		log.info("Book Bought, available quantity " + b.getQuantity());
+		return bookMapper.map(saved);
 	}
 
 	@Override
-	public Book findByIsbn(String searchString) {
-		return bookRepository.findFirstByIsbn(searchString).orElseThrow(
+	public BookDto findByIsbn(String searchString) {
+		Book book = bookRepository.findFirstByIsbn(searchString).orElseThrow(
 				() -> new ResourceNotFoundException("Invalid Isbn"));
+		return bookMapper.map(book);
 	}
 
 	@Override
-	public List<Book> findBooks(SearchBookDto searchBookDto) {
-		List<Book> dummyResult = new ArrayList<Book>();
+	public List<BookDto> findBooks(SearchBookDto searchBookDto) {
+		List<Book> result;
 		String isbn = searchBookDto.getIsbn();
 		String author = searchBookDto.getAuthor();
 		String title = searchBookDto.getTitle();
 		if (StringUtils.isNotBlank(isbn)) {
-			logger.info("Find books based on isbn " + isbn);
-			return bookRepository.findByIsbn(isbn).orElse(dummyResult);
+			log.info("Find books based on isbn " + isbn);
+			result = bookRepository.findByIsbn(isbn).orElseThrow(() -> new ResourceNotFoundException("Invalid Isbn"));
 		} else if (StringUtils.isNotBlank(author)) {
-			logger.info("Find books based on author " + author);
-			return bookRepository.findByAuthorContaining(author)
-					.orElse(dummyResult);
+			log.info("Find books based on author " + author);
+			result = bookRepository.findByAuthorContaining(author)
+					.orElseThrow(() -> new ResourceNotFoundException("Invalid Author"));
 		} else if (StringUtils.isNotBlank(title)) {
-			logger.info("Find books based on title " + title);
-			return bookRepository.findByTitleContaining(title)
-					.orElse(dummyResult);
+			log.info("Find books based on title " + title);
+			result = bookRepository.findByTitleContaining(title)
+					.orElseThrow(() -> new ResourceNotFoundException("Invalid title"));
 		} else {
-			logger.info("Find books all");
-			return bookRepository.findAll();
+			log.info("Find books all");
+			result = bookRepository.findAll();
 		}
+		return bookMapper.map(result);
 	}
 
 	@Override
 	public List<String> findPostsByIsbn(String isbn) {
-		logger.info("Finding post for isbn - " + isbn);
+		log.info("Finding post for isbn - " + isbn);
 		CompletableFuture<Post[]> completableFuture = postService
 				.findPosts(isbn);
-		Book book = findByIsbn(isbn);
+		BookDto bookDto = findByIsbn(isbn);
 		Post[] posts = new Post[1];
 		try {
 			posts = completableFuture.get();
 		} catch (InterruptedException e) {
-			logger.error("Unable to get data from posts api", e);
+			log.error("Unable to get data from posts api", e);
 			throw new ResourceNotFoundException(
 					"Unable to get data from posts api");
 		} catch (ExecutionException e) {
-			logger.error("Unable to get data from posts api", e);
+			log.error("Unable to get data from posts api", e);
 			throw new ResourceNotFoundException(
 					"Unable to get data from posts api");
 		}
 		List<String> result = new ArrayList<String>();
 		Arrays.stream(posts)
-				.filter(p -> StringUtils.contains(p.getTitle(), book.getTitle())
-						|| StringUtils.contains(p.getBody(), book.getTitle()))
+				.filter(p -> StringUtils.contains(p.getTitle(), bookDto.getTitle())
+						|| StringUtils.contains(p.getBody(), bookDto.getTitle()))
 				.forEach(p -> result.add(p.getTitle()));
 		return result;
 	}

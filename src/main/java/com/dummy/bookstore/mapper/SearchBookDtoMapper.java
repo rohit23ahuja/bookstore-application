@@ -9,7 +9,7 @@ import com.dummy.bookstore.dto.SearchBookDto;
 @Mapper
 public interface SearchBookDtoMapper {
 
-	default SearchBookDto requestParamsToSearchBookDto(
+	default SearchBookDto map(
 			Map<String, String> requestParams) {
 		return new SearchBookDto(requestParams.get("isbn"),
 				requestParams.get("author"), requestParams.get("title"));
