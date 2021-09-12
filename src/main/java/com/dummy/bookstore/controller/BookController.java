@@ -1,5 +1,6 @@
 package com.dummy.bookstore.controller;
 
+import java.net.URI;
 import java.util.List;
 import java.util.Map;
 
@@ -20,12 +21,14 @@ import com.dummy.bookstore.dto.BookDto;
 import com.dummy.bookstore.dto.SearchBookDto;
 import com.dummy.bookstore.mapper.BookDtoMapper;
 import com.dummy.bookstore.mapper.SearchBookDtoMapper;
-import com.dummy.bookstore.model.Book;
 import com.dummy.bookstore.request.AddBookRequest;
+import com.dummy.bookstore.request.BuyBookRequest;
+import com.dummy.bookstore.response.BookResponse;
 import com.dummy.bookstore.service.BookService;
 
 @RestController
 public class BookController {
+	
 	@Autowired
 	private BookService bookService;
 	
@@ -34,6 +37,7 @@ public class BookController {
 	
 	@Autowired
 	private BookDtoMapper bookDtoMapper;
+	
 
 	/**
 	 * Api to search books based on either one of - isbn, author or title. If none
@@ -48,9 +52,10 @@ public class BookController {
 	 * @return
 	 */
 	@GetMapping("/books")
-	public ResponseEntity<List<Book>> getBooks(@RequestParam Map<String, String> allRequestParams) {
-		SearchBookDto searchBookDto = searchBookDtoMapper.requestParamsToSearchBookDto(allRequestParams);
-		return new ResponseEntity<List<Book>>(bookService.findBooks(searchBookDto), HttpStatus.OK);
+	public ResponseEntity<List<BookResponse>> getBooks(@RequestParam(required = false) Map<String, String> queryParameters) {
+		SearchBookDto searchBookDto = searchBookDtoMapper.map(queryParameters);
+		List<BookDto> bookDtos = bookService.findBooks(searchBookDto);
+		return ResponseEntity.ok().body(bookDtoMapper.map(bookDtos));
 	}
 
 	/**
@@ -61,9 +66,10 @@ public class BookController {
 	 * @return
 	 */
 	@PostMapping("/books")
-	public ResponseEntity<Book> addBook(@RequestBody @Valid AddBookRequest addBookRequest) {
-		BookDto bookDto = bookDtoMapper.addBookRequestToBookDto(addBookRequest);
-		return new ResponseEntity<Book>(bookService.addBook(bookDto), HttpStatus.CREATED);
+	public ResponseEntity<BookResponse> addBook(@RequestBody @Valid AddBookRequest addBookRequest) {
+		BookDto bookDto = bookService.addBook(bookDtoMapper.map(addBookRequest));
+		BookResponse bookResponse = bookDtoMapper.map(bookDto);
+		return ResponseEntity.created(URI.create("books/"+bookResponse.getId())).body(bookResponse);
 	}
 
 	/**
@@ -75,8 +81,10 @@ public class BookController {
 	 * @return
 	 */
 	@PutMapping("/books")
-	public ResponseEntity<String> buyBook(@RequestBody @Valid Book book) {
-		return new ResponseEntity<String>(bookService.buyBook(book), HttpStatus.OK);
+	public ResponseEntity<BookResponse> buyBook(@RequestBody @Valid BuyBookRequest buyBookRequest) {
+		BookDto bookDto = bookService.buyBook(bookDtoMapper.map(buyBookRequest));
+		BookResponse bookResponse = bookDtoMapper.map(bookDto);
+		return ResponseEntity.ok().body(bookResponse);
 	}
 
 	/**

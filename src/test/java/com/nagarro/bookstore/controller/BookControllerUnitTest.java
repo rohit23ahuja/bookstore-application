@@ -9,7 +9,6 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-import java.util.ArrayList;
 import java.util.List;
 
 import org.junit.Test;
@@ -22,10 +21,12 @@ import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.test.web.servlet.MockMvc;
 
 import com.dummy.bookstore.controller.BookController;
+import com.dummy.bookstore.dto.BookDto;
 import com.dummy.bookstore.dto.SearchBookDto;
 import com.dummy.bookstore.model.Book;
 import com.dummy.bookstore.service.BookService;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.google.common.collect.Lists;
 @RunWith(SpringRunner.class)
 @WebMvcTest(BookController.class)
 public class BookControllerUnitTest {
@@ -38,12 +39,11 @@ public class BookControllerUnitTest {
 	
 	@Test
 	public void getBooks() throws Exception {
-		List<Book> books = new ArrayList<>();
-		Book book = new Book(1l, "123ABC", "Game Of Thrones", "George Martin", 1700, 5, 1);
-		books.add(book);
+		List<BookDto> bookDtos = getBookDtos();
+
 		SearchBookDto searchBookDto = new SearchBookDto("", "", "");
 		
-		when(bookService.getBooks()).thenReturn(books);
+		when(bookService.getBooks()).thenReturn(bookDtos);
 		mockMvc.perform(get("/books"))
 		.andExpect(status().isOk())
 		.andExpect(content().contentType(MediaType.APPLICATION_JSON_UTF8))
@@ -53,6 +53,11 @@ public class BookControllerUnitTest {
 		verify(bookService, times(1)).findBooks(searchBookDto);
 	}
 	
+	private List<BookDto> getBookDtos() {
+        BookDto bookDto = new BookDto("123ABC", "Game Of Thrones", "George Martin", 1700, 1l, 1);
+		return Lists.newArrayList(bookDto);
+	}
+
 	@Test
 	public void addBook() throws Exception{
 		Book book = new Book(7l, "42398", "Times", "India", 5, 5, 1);
@@ -67,7 +72,7 @@ public class BookControllerUnitTest {
 	@Test
 	public void buyBook() throws Exception{
 		Book book = new Book(1l, "123ABC", "Game Of Thrones", "George Martin", 1700, 5, 1);
-		when(bookService.buyBook(book)).thenReturn("Book Bought");
+		//when(bookService.buyBook(book)).thenReturn("Book Bought");
 		mockMvc.perform(put("/books")
 				.contentType("application/json")
 				.content(asJsonString(book)))
