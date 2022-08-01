@@ -12,7 +12,6 @@ import org.springframework.web.client.RestTemplate;
 
 import com.dummy.bookstore.exception.handler.RestTemplateResponseErrorHandler;
 import com.dummy.bookstore.model.Post;
-import com.dummy.bookstore.service.BookService;
 import com.dummy.bookstore.service.PostService;
 
 @Service
@@ -25,9 +24,6 @@ public class PostServiceImpl implements PostService {
 
 	@Autowired
 	RestTemplateResponseErrorHandler errorHandler;
-
-	@Autowired
-	BookService bookService;
 
 	@Async
 	public CompletableFuture<Post[]> findPosts(String isbn) {

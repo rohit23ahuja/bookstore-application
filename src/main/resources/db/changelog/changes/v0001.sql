@@ -1,4 +1,4 @@
-create table book
+create table if not exists book
 (
   book_id BIGSERIAL PRIMARY KEY,
   isbn varchar(255) not null,
